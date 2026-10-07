@@ -1,0 +1,5 @@
+codigo,nombre,cantidad
+0001,Artículo ficticio,3
+0001,Duplicado dentro del archivo,4
+0002,Tipo inválido,no-es-numero
+0003,,2

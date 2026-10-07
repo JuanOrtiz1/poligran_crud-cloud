@@ -1,0 +1,4 @@
+Nombre,Apellido,Correo,Direccion,Edad,Jornada,Semestre,Sexo,Telefono,Universidad
+Ana,Ejemplo,ana@example.invalid,"Calle de prueba 1, apartamento 2",23,Nocturna,4,Femenino,0001234567,Universidad de ejemplo
+,SinNombre,prueba@example.invalid,Calle ficticia,20,Diurna,2,Masculino,0000000000,Universidad de ejemplo
+Ana,Ejemplo,ana@example.invalid,"Calle de prueba 1, apartamento 2",23,Nocturna,4,Femenino,0001234567,Universidad de ejemplo

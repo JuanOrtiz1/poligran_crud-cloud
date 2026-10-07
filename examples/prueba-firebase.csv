@@ -1,0 +1,3 @@
+_id,Nombre,Apellido,Correo,Direccion,Edad,Jornada,Semestre,Sexo,Telefono,Universidad
+u4-demo-ana-20261006,Ana,Demo Cloud U4,ana.u4@example.invalid,Direccion ficticia de prueba 1,23,Nocturna,4,Femenino,0000000001,Universidad ficticia
+u4-demo-luis-20261006,Luis,Demo Cloud U4,luis.u4@example.invalid,Direccion ficticia de prueba 2,30,Diurna,8,Masculino,0000000002,Universidad ficticia
