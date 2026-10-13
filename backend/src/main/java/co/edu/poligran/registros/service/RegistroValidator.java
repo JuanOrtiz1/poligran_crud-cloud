@@ -38,7 +38,7 @@ public class RegistroValidator {
             if (value == null || value instanceof String s && s.isBlank()) {
                 if (field.required() || field.name().equals(schema.idField()))
                     throw ApiException.invalid("El campo '" + field.name() + "' es obligatorio.");
-                result.put(field.name(), schema.generatedId() ? "" : null);
+                result.put(field.name(), schema.generatedId() && field.type() == Schema.Type.TEXT ? "" : null);
                 continue;
             }
             try {
@@ -48,8 +48,8 @@ public class RegistroValidator {
                         yield s;
                     }
                     case INTEGER -> {
-                        String s = value.toString();
-                        if (!s.matches("-?(0|[1-9][0-9]*)")) throw new IllegalArgumentException();
+                        String s = value.toString().strip();
+                        if (!s.matches("-?[0-9]+")) throw new IllegalArgumentException();
                         long n = Long.parseLong(s);
                         if (n < -9007199254740991L || n > 9007199254740991L) throw new IllegalArgumentException();
                         yield n;

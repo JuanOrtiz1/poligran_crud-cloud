@@ -14,7 +14,8 @@ public class RegistroConfiguration {
     public static Schema schema() {
         return new Schema("_id", List.of("Nombre", "Apellido", "Correo", "Direccion", "Edad",
             "Jornada", "Semestre", "Sexo", "Telefono", "Universidad").stream()
-            .map(name -> new Schema.Field(name, Schema.Type.TEXT, name.equals("Nombre") || name.equals("Apellido")))
+            .map(name -> new Schema.Field(name, name.equals("Edad") || name.equals("Semestre")
+                ? Schema.Type.INTEGER : Schema.Type.TEXT, name.equals("Nombre") || name.equals("Apellido")))
             .toList(), true);
     }
     @Bean

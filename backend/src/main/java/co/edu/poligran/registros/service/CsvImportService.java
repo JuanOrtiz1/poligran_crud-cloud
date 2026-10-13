@@ -49,7 +49,7 @@ public class CsvImportService {
                         if (!row.isConsistent()) throw ApiException.invalid("La cantidad de columnas no coincide con los encabezados.");
                         var data = validator.validate(row.toMap());
                         if (validator.schema().generatedId() && validator.id(data) == null)
-                            data.put(validator.schema().idField(), csvId(data));
+                            data.put(validator.schema().idField(), csvId(row.toMap()));
                         if (!seen.add(validator.id(data))) throw ApiException.duplicate();
                         pending.add(new Pending(number, data));
                     } catch (ApiException e) {
@@ -77,10 +77,13 @@ public class CsvImportService {
     }
     // ID determinista por contenido, para que reimportar el mismo CSV no sobrescriba ni duplique.
     // No supone que Correo sea único ni modifica documentos existentes con IDs automáticos.
-    private String csvId(Map<String, Object> data) {
+    private String csvId(Map<String, String> data) {
         var content = new StringBuilder();
         for (var field : validator.schema().fields()) {
-            String value = String.valueOf(data.get(field.name()));
+            // Conservar los IDs anteriores a la conversión de Edad y Semestre a números.
+            String value = data.entrySet().stream().filter(e -> e.getKey().strip().equals(field.name()))
+                .map(Map.Entry::getValue).findFirst().orElse("");
+            if (value.isBlank()) value = "";
             content.append(value.length()).append(':').append(value);
         }
         try {

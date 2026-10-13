@@ -42,16 +42,20 @@ class FirestoreIntegrationTest {
         mvc.perform(post("/api/registros").contentType("application/json").content(json.writeValueAsBytes(row(id))))
             .andExpect(status().isCreated());
     }
-    @Test void schemaHasTenTextFieldsAndGeneratedDocumentId() throws Exception {
+    @Test void schemaHasNumericFieldsAndGeneratedDocumentId() throws Exception {
         mvc.perform(get("/api/esquema")).andExpect(status().isOk())
             .andExpect(jsonPath("$.idField").value("_id")).andExpect(jsonPath("$.generatedId").value(true))
-            .andExpect(jsonPath("$.fields.length()").value(10));
+            .andExpect(jsonPath("$.fields.length()").value(10))
+            .andExpect(jsonPath("$.fields[4].type").value("INTEGER"))
+            .andExpect(jsonPath("$.fields[6].type").value("INTEGER"));
     }
     @Test void performsCrudAndDoesNotStoreIdAsAField() throws Exception {
         createRow("crud");
         mvc.perform(get("/api/registros/crud")).andExpect(status().isOk())
-            .andExpect(jsonPath("$.Edad").value("045")).andExpect(jsonPath("$.Telefono").value("0001234567"));
-        assertFalse(firestore.collection(COLLECTION).document("crud").get().get().contains("_id"));
+            .andExpect(jsonPath("$.Edad").value(45)).andExpect(jsonPath("$.Telefono").value("0001234567"));
+        var saved = firestore.collection(COLLECTION).document("crud").get().get();
+        assertFalse(saved.contains("_id"));
+        assertEquals(45L, saved.get("Edad")); assertEquals(8L, saved.get("Semestre"));
         var changed = row("crud"); changed.put("Direccion", "Dirección modificada");
         mvc.perform(put("/api/registros/crud").contentType("application/json").content(json.writeValueAsBytes(changed)))
             .andExpect(status().isOk());
@@ -74,9 +78,12 @@ class FirestoreIntegrationTest {
         original.put("datoExterno", 42L);
         var doc = firestore.collection(COLLECTION).document("legacy"); doc.create(original).get();
         assertEquals("Ana ", repository.get("legacy").get("Nombre"));
-        var changed = row("legacy"); changed.put("Nombre", "Nuevo nombre"); repository.update("legacy", changed);
+        var changed = row("legacy"); changed.put("Nombre", "Nuevo nombre");
+        mvc.perform(put("/api/registros/legacy").contentType("application/json").content(json.writeValueAsBytes(changed)))
+            .andExpect(status().isOk());
         var saved = doc.get().get().getData();
         assertEquals("Nuevo nombre", saved.get("Nombre ")); assertFalse(saved.containsKey("Nombre"));
+        assertEquals(45L, saved.get("Edad")); assertEquals(8L, saved.get("Semestre"));
         assertEquals(42L, saved.get("datoExterno")); assertFalse(saved.containsKey("_id"));
     }
     @Test void pagesByDocumentIdEvenWhenCursorDocumentWasDeleted() throws Exception {
@@ -96,7 +103,10 @@ class FirestoreIntegrationTest {
             .andExpect(jsonPath("$.skipped").value(2)).andExpect(jsonPath("$.failed").value(0));
         mvc.perform(multipart("/api/registros/importar").file(file)).andExpect(status().isOk())
             .andExpect(jsonPath("$.created").value(0)).andExpect(jsonPath("$.skipped").value(3));
-        assertEquals(1, repository.list(10, null).items().size());
+        var documents = firestore.collection(COLLECTION).get().get().getDocuments();
+        assertEquals(1, documents.size());
+        assertEquals(45L, documents.getFirst().get("Edad"));
+        assertEquals(8L, documents.getFirst().get("Semestre"));
     }
     @Test void rejectsDuplicateCreatesAndInvalidRequests() throws Exception {
         createRow("existing");
