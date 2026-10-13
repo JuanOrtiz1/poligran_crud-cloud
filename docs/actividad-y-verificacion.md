@@ -27,7 +27,7 @@ Los datos de prueba son ficticios. La suite automatizada de integración utiliza
 
 ## Decisiones aplicadas al esquema entregado
 
-Se conservan los diez campos como texto, tal como en Firestore. El ID se toma del documento, no de Correo. Nombre y Apellido son obligatorios como regla de esta aplicación; los demás campos admiten cadena vacía. La colección predeterminada es "registros", sin espacios finales, según la confirmación del usuario.
+Edad y Semestre se guardan como enteros; los otros ocho campos se conservan como texto. El ID se toma del documento, no de Correo. Nombre y Apellido son obligatorios como regla de esta aplicación; los numéricos opcionales vacíos se guardan como null y los demás campos admiten cadena vacía. La colección predeterminada es "registros", sin espacios finales, según la confirmación del usuario.
 
 El ID del proyecto y el número del proyecto no son credenciales. Se necesita un JSON de cuenta de servicio autorizado, guardado fuera del repositorio, o credenciales ADC válidas. No se requieren claves de Firebase en React.
 
@@ -53,3 +53,9 @@ Google. (s. f.). *Connect your app to the Cloud Firestore Emulator*. Firebase. h
 Apache Software Foundation. (s. f.). *Apache Commons CSV*. https://commons.apache.org/proper/commons-csv/
 
 Las referencias corresponden a páginas técnicas de actualización continua. Para el documento final, incorpora las citas en el texto y aplica el formato APA solicitado por el tutor.
+
+## Actualización del 11 de octubre de 2026
+
+Edad y Semestre pasan a INTEGER: creación, edición e importación CSV convierten sus valores a enteros y los vacíos a null. Teléfono conserva su tipo texto y sus ceros iniciales. Se conserva el cálculo anterior de los IDs CSV para evitar duplicados al reimportar el mismo archivo. Los documentos existentes se convierten al editar y guardar; no se ejecutó una migración de la base real.
+
+Verificación local: 24 pruebas aprobadas y compilación frontend aprobada. Las 7 pruebas de integración se omitieron por no disponer de un emulador activo; se actualizaron sus comprobaciones para verificar los tipos numéricos en Firestore.

@@ -16,13 +16,15 @@ Aplicación local con backend **Java 21 / Spring Boot** e interfaz gráfica **Re
 
 Los valores predeterminados están en `backend/src/main/resources/application.properties`. Puedes sustituirlos con `FIREBASE_PROJECT_ID`, `FIREBASE_DATABASE_ID` y `FIREBASE_COLLECTION`. La colección confirmada es `registros`, sin espacios finales.
 
-Todos los campos se almacenan como **string**, incluyendo Edad, Semestre y Telefono:
+**Edad y Semestre se almacenan como números enteros** en Firestore. Los otros ocho campos, incluido Telefono, se almacenan como texto:
 
 ```text
 Nombre,Apellido,Correo,Direccion,Edad,Jornada,Semestre,Sexo,Telefono,Universidad
 ```
 
-Nombre y Apellido son obligatorios. Los demás pueden quedar vacíos y se guardan como `""`. Este criterio es una decisión de la aplicación, ya que no se indicó otra regla de obligatoriedad. El contenido de los valores, incluidos los espacios y ceros iniciales, se conserva.
+Nombre y Apellido son obligatorios. Los demás pueden quedar vacíos: Edad y Semestre se guardan como `null`, y los campos de texto como `""`. Este criterio es una decisión de la aplicación, ya que no se indicó otra regla de obligatoriedad. El contenido de los campos de texto, incluidos los espacios y ceros iniciales, se conserva. En los numéricos, `045` se convierte a `45` y `08` a `8`; se rechazan decimales y texto no numérico.
+
+Los documentos anteriores no se migran automáticamente: al editarlos y guardarlos, Edad y Semestre se convierten a números. Reimportar un CSV idéntico sigue omitiendo los documentos existentes y conserva los IDs calculados antes de este cambio.
 
 Los nombres de campo con espacios iniciales o finales se reconocen al leer. Al editar un documento existente se conservan sus claves originales y los campos adicionales que no forman parte del formulario. Si existen dos claves ambiguas, por ejemplo `Nombre` y `Nombre ` en el mismo documento, se informa del conflicto y se evita editarlas automáticamente.
 
@@ -82,7 +84,7 @@ npm ci
 npm run dev
 ```
 
-Abre **http://127.0.0.1:5173**. El backend escucha en `127.0.0.1:8080`; Vite reenvía las solicitudes `/api`. Ambos servidores se limitan a tu computador.
+Abre **http://127.0.0.1:5174**. El backend escucha en `127.0.0.1:8081`; Vite reenvía las solicitudes `/api`. Ambos servidores se limitan a tu computador.
 
 La primera consulta carga diez registros y permite comprobar la conexión sin modificar la base. Para comprobar específicamente el documento del enlace, busca `BX2oGqeu7pVD4g7OsVVs`.
 
@@ -102,7 +104,7 @@ No se presume que Correo sea único. Los documentos existentes con IDs automáti
 
 El archivo debe ser UTF-8, con los diez encabezados anteriores, en cualquier orden. También admite una columna opcional `_id` para conservar IDs explícitos; sin esa columna no necesitas inventar identificadores. Se permiten BOM, campos entre comillas, comas y saltos de línea dentro de un campo entre comillas, y espacios alrededor de los nombres de encabezado.
 
-Las filas sin ID reciben `csv-` más un SHA-256 de sus diez valores. Reimportar exactamente el mismo contenido genera el mismo ID y omite el documento existente. Una fila cuyo contenido cambió se considera nueva: para cambiar un registro existente utiliza Editar. Este mecanismo no detecta como duplicado un documento previamente creado con un ID automático distinto.
+Las filas sin ID reciben `csv-` más un SHA-256 de sus diez valores originales del CSV. Reimportar exactamente el mismo contenido genera el mismo ID y omite el documento existente. Una fila cuyo contenido cambió se considera nueva: para cambiar un registro existente utiliza Editar. Este mecanismo no detecta como duplicado un documento previamente creado con un ID automático distinto.
 
 La creación es condicional y no sobrescribe documentos. Un ID repetido dentro del archivo se omite. Encabezados inválidos, sintaxis inválida, UTF-8 inválido o exceso de filas rechazan el archivo antes de escribir. Los errores individuales omiten la fila y permiten cargar las válidas.
 
@@ -114,7 +116,7 @@ Límites configurables: `CSV_MAX_ROWS=1000`, `CSV_MAX_FILE_SIZE=2MB`, `CSV_MAX_R
 
 | Método y ruta | Resultado |
 | --- | --- |
-| GET /api/esquema | Diez campos TEXT, identificador _id y generatedId=true |
+| GET /api/esquema | Ocho campos TEXT y dos INTEGER (Edad y Semestre), identificador _id y generatedId=true |
 | GET /api/registros?limit=20&cursor=ID | items y nextCursor; límite de 1 a 100 |
 | GET /api/registros/{id} | Registro por ID del documento |
 | POST /api/registros | Crea; 201 y registro con _id |
@@ -166,6 +168,15 @@ cd frontend
 npm run build
 ```
 
+Para probar la versión compilada localmente, con el backend en ejecución:
+
+```sh
+cd frontend
+npm run preview
+```
+
+Abre `http://127.0.0.1:4173`. Vite reenvía `/api` al backend en `127.0.0.1:8081`.
+
 **Verificación realizada el 6 de octubre de 2026:** 29 pruebas aprobadas (22 de validación y 7 de integración con Firestore Emulator 1.22.0); compilación frontend aprobada. En Safari se comprobó creación, búsqueda, edición e importación de dos filas mediante la interfaz contra el emulador. La eliminación se comprobó mediante la API en las pruebas de integración. **Verificación adicional contra la nube real:** cuenta de servicio autenticada, importación de dos filas confirmada, lecturas posteriores correctas, CRUD completo comprobado con un documento temporal y reimportación sin duplicados. En Safari se verificó que los dos documentos aparecen en la lista. Detalles en `docs/verificacion-firebase.md`. Después del cambio para cargar la ruta desde local.properties se repitieron las 22 pruebas de validación, todas aprobadas; las 7 de emulador se omitieron en esa ejecución sin emulador.
 
 ## 6. Actividad y entrega
@@ -180,9 +191,9 @@ El archivo ZIP de fuentes debe incluir backend, frontend, ejemplos y documentaci
 - **Lista vacía inesperada:** comprueba que FIREBASE_COLLECTION sea registros, sin espacios finales, y que hayas eliminado FIRESTORE_EMULATOR_HOST al volver a tu nube.
 - **404 al buscar:** usa el ID del documento, no el correo ni el número del proyecto.
 - **409 al editar:** actualiza la lista y revisa si cambió el documento o hay claves duplicadas por espacios.
-- **Puerto ocupado:** detén otra instancia que use 8080, 5173 o 8189. Si cambias el puerto del backend, ajusta el proxy de Vite.
+- **Puerto ocupado:** detén otra instancia que use 8081, 5174 o 8189. Si cambias el puerto del backend, ajusta el proxy de Vite.
 - **Java incorrecto:** java y javac deben ser versión 21.
-- **CSV rechazado:** comprueba los diez encabezados, UTF-8, delimitador y comillas. Exporta los valores como texto para conservar ceros iniciales.
+- **CSV rechazado:** comprueba los diez encabezados, UTF-8, delimitador y comillas. En los campos de texto, exporta los valores como texto para conservar ceros iniciales.
 
 Esta aplicación está preparada para uso local. Publicarla requiere añadir autenticación y autorización a la API. Los permisos de Firebase Admin corresponden al servidor; las reglas del cliente web no sustituyen esos permisos.
 

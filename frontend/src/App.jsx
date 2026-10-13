@@ -92,9 +92,9 @@ export default function App() {
       </section>
       <section className="card" id="registro-form"><span className="step">02 / ADMINISTRAR</span><h2>{editing === null ? 'Agregar un registro' : `Editar ${editing}`}</h2>
         <form onSubmit={submit}><fieldset disabled={busy || !ready}>
-          {ready && <p className="muted">{editing === null ? 'El ID del documento se genera al crear el registro. Todos los campos se guardan como texto.' : `ID del documento: ${editing}`}</p>}
+          {ready && <p className="muted">{editing === null ? 'El ID del documento se genera al crear el registro. Edad y Semestre admiten números enteros; si se dejan vacíos, quedan sin valor.' : `ID del documento: ${editing}`}</p>}
           {fields.length === 0 && <p className="muted">El formulario se habilitará con los campos confirmados.</p>}
-          {fields.map(f => <label key={f.name}>{f.name}{f.required ? ' *' : ''}<input type={f.name === 'Correo' ? 'email' : 'text'} inputMode={['Edad','Semestre','Telefono'].includes(f.name) ? 'numeric' : undefined} required={f.required} value={form[f.name] ?? ''} onChange={e => setForm({...form,[f.name]:e.target.value})}/></label>)}
+          {fields.map(f => <label key={f.name}>{f.name}{f.required ? ' *' : ''}<input type={f.type === 'INTEGER' ? 'number' : f.name === 'Correo' ? 'email' : 'text'} step={f.type === 'INTEGER' ? 1 : undefined} inputMode={['Edad','Semestre','Telefono'].includes(f.name) ? 'numeric' : undefined} required={f.required} value={form[f.name] ?? ''} onChange={e => setForm({...form,[f.name]:e.target.value})}/></label>)}
           <div className="actions"><button>{editing === null ? 'Crear registro' : 'Guardar cambios'}</button>{editing !== null && <button className="secondary" type="button" onClick={() => { setEditing(null); setForm({}); }}>Cancelar</button>}</div>
         </fieldset></form>
       </section>

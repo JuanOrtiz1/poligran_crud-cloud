@@ -7,7 +7,7 @@ export async function request(path, { body, ...options } = {}) {
       body: body instanceof FormData ? body : body === undefined ? undefined : JSON.stringify(body),
     });
   } catch {
-    throw new Error('No se pudo contactar con la API. Comprueba que el backend esté iniciado en el puerto 8080.');
+    throw new Error('No se pudo contactar con la API. Comprueba que el backend esté iniciado en el puerto 8081.');
   }
   if (response.status === 204) return null;
   const data = await response.json().catch(() => null);
